@@ -283,15 +283,8 @@
             let currentDate = new Date();
             let currentView = 'week'; // 'week' ou 'day'
             
-            // Exemplos de compromissos pré-definidos
-            let events = [
-                { day: 1, time: "09:00", duration: 60, title: "Reunião de Equipe", type: "meeting" },
-                { day: 1, time: "14:30", duration: 90, title: "Apresentação para Cliente", type: "work" },
-                { day: 2, time: "11:00", duration: 30, title: "Consulta Médica", type: "personal" },
-                { day: 3, time: "16:00", duration: 60, title: "Treinamento", type: "work" },
-                { day: 4, time: "10:30", duration: 120, title: "Desenvolvimento de Projeto", type: "work" },
-                { day: 5, time: "13:00", duration: 60, title: "Almoço com Colegas", type: "personal" }
-            ];
+            // Array vazio de eventos - SEM compromissos pré-definidos
+            let events = [];
             
             // Inicializar o calendário
             initCalendar();
