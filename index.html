@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendário com Horários</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+        }
+        
+        header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+        }
+        
+        .description {
+            color: #ecf0f1;
+            font-size: 0.95rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .controls {
+            padding: 15px 20px;
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #eaeaea;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .week-navigation {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+        
+        button:hover {
+            background-color: #2980b9;
+        }
+        
+        #current-week {
+            font-weight: 600;
+            min-width: 200px;
+            text-align: center;
+        }
+        
+        .view-options {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .view-options button {
+            background-color: #7f8c8d;
+        }
+        
+        .view-options button.active {
+            background-color: #3498db;
+        }
+        
+        .calendar-container {
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1000px;
+        }
+        
+        thead th {
+            background-color: #34495e;
+            color: white;
+            padding: 15px 5px;
+            text-align: center;
+            font-weight: 600;
+            border-right: 1px solid #2c3e50;
+        }
+        
+        thead th:first-child {
+            width: 100px;
+        }
+        
+        thead th:not(:first-child) {
+            min-width: 150px;
+        }
+        
+        tbody td {
+            padding: 0;
+            border: 1px solid #eaeaea;
+            height: 40px;
+            vertical-align: top;
+        }
+        
+        .time-slot {
+            height: 40px;
+            padding: 5px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 0.85rem;
+            position: relative;
+        }
+        
+        .time-slot:hover {
+            background-color: #f9f9f9;
+        }
+        
+        .time-label {
+            background-color: #f8f9fa;
+            font-weight: 500;
+            text-align: right;
+            padding-right: 10px;
+            color: #555;
+            border-right: 1px solid #ddd;
+        }
+        
+        .time-label span {
+            display: inline-block;
+            margin-top: 10px;
+        }
+        
+        .event {
+            background-color: #e3f2fd;
+            border-left: 3px solid #2196f3;
+            padding: 5px 8px;
+            margin: 2px;
+            border-radius: 3px;
+            font-size: 0.8rem;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+        
+        .event.meeting {
+            background-color: #e8f5e9;
+            border-left-color: #4caf50;
+        }
+        
+        .event.personal {
+            background-color: #f3e5f5;
+            border-left-color: #9c27b0;
+        }
+        
+        .event.work {
+            background-color: #fff3e0;
+            border-left-color: #ff9800;
+        }
+        
+        .current-time {
+            background-color: rgba(52, 152, 219, 0.1);
+        }
+        
+        .instructions {
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-top: 1px solid #eaeaea;
+            font-size: 0.9rem;
+        }
+        
+        .instructions h3 {
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+        
+        .instructions ul {
+            padding-left: 20px;
+        }
+        
+        .instructions li {
+            margin-bottom: 8px;
+        }
+        
+        .instructions code {
+            background-color: #eaeaea;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-size: 0.85rem;
+        }
+        
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .week-navigation {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .view-options {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            body {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Calendário com Horários</h1>
+            <p class="description">Horários das 7h00 às 20h00 em intervalos de 30 minutos. Clique em um horário para adicionar um compromisso.</p>
+        </header>
+        
+        <div class="controls">
+            <div class="week-navigation">
+                <button id="prev-week">&larr; Semana Anterior</button>
+                <div id="current-week">Semana de 10 a 16 de Junho, 2024</div>
+                <button id="next-week">Próxima Semana &rarr;</button>
+            </div>
+            
+            <div class="view-options">
+                <button id="view-week" class="active">Vista Semanal</button>
+                <button id="view-day">Vista Diária</button>
+                <button id="print">Imprimir Calendário</button>
+            </div>
+        </div>
+        
+        <div class="calendar-container">
+            <table id="calendar-table">
+                <!-- Conteúdo gerado por JavaScript -->
+            </table>
+        </div>
+        
+        <div class="instructions">
+            <h3>Como usar este calendário:</h3>
+            <ul>
+                <li>Clique em qualquer horário para adicionar um compromisso</li>
+                <li>Use os botões de navegação para mudar de semana</li>
+                <li>Clique em um compromisso existente para editá-lo ou removê-lo</li>
+                <li>Use os botões de vista para alternar entre vista semanal e diária</li>
+                <li>Clique no botão <code>Imprimir Calendário</code> para imprimir ou salvar como PDF</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Dados iniciais do calendário
+            let currentDate = new Date();
+            let currentView = 'week'; // 'week' ou 'day'
+            
+            // Exemplos de compromissos pré-definidos
+            let events = [
+                { day: 1, time: "09:00", duration: 60, title: "Reunião de Equipe", type: "meeting" },
+                { day: 1, time: "14:30", duration: 90, title: "Apresentação para Cliente", type: "work" },
+                { day: 2, time: "11:00", duration: 30, title: "Consulta Médica", type: "personal" },
+                { day: 3, time: "16:00", duration: 60, title: "Treinamento", type: "work" },
+                { day: 4, time: "10:30", duration: 120, title: "Desenvolvimento de Projeto", type: "work" },
+                { day: 5, time: "13:00", duration: 60, title: "Almoço com Colegas", type: "personal" }
+            ];
+            
+            // Inicializar o calendário
+            initCalendar();
+            
+            // Configurar ouvintes de eventos
+            document.getElementById('prev-week').addEventListener('click', previousWeek);
+            document.getElementById('next-week').addEventListener('click', nextWeek);
+            document.getElementById('view-week').addEventListener('click', () => switchView('week'));
+            document.getElementById('view-day').addEventListener('click', () => switchView('day'));
+            document.getElementById('print').addEventListener('click', printCalendar);
+            
+            // Função para inicializar o calendário
+            function initCalendar() {
+                updateWeekDisplay();
+                renderCalendar();
+            }
+            
+            // Função para renderizar o calendário
+            function renderCalendar() {
+                const table = document.getElementById('calendar-table');
+                table.innerHTML = '';
+                
+                if (currentView === 'week') {
+                    renderWeekView(table);
+                } else {
+                    renderDayView(table);
+                }
+                
+                // Adicionar eventos ao calendário
+                renderEvents();
+                
+                // Adicionar ouvintes de clique aos slots de tempo
+                addTimeSlotListeners();
+            }
+            
+            // Função para renderizar a vista semanal
+            function renderWeekView(table) {
+                // Cabeçalho da tabela
+                const thead = document.createElement('thead');
+                const headerRow = document.createElement('tr');
+                
+                // Célula vazia para o canto superior esquerdo
+                const emptyHeader = document.createElement('th');
+                headerRow.appendChild(emptyHeader);
+                
+                // Cabeçalhos dos dias da semana
+                const daysOfWeek = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+                const dates = getWeekDates(currentDate);
+                
+                for (let i = 0; i < 7; i++) {
+                    const th = document.createElement('th');
+                    const date = dates[i];
+                    th.innerHTML = `<div>${daysOfWeek[i]}</div><div style="font-size:0.9rem;font-weight:normal">${formatDate(date)}</div>`;
+                    headerRow.appendChild(th);
+                }
+                
+                thead.appendChild(headerRow);
+                table.appendChild(thead);
+                
+                // Corpo da tabela com horários
+                const tbody = document.createElement('tbody');
+                
+                // Gerar horários das 7h às 20h em intervalos de 30 minutos
+                for (let hour = 7; hour <= 20; hour++) {
+                    for (let minute = 0; minute < 60; minute += 30) {
+                        const row = document.createElement('tr');
+                        
+                        // Coluna de horário
+                        const timeCell = document.createElement('td');
+                        timeCell.className = 'time-label';
+                        const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+                        timeCell.innerHTML = `<span>${timeString}</span>`;
+                        row.appendChild(timeCell);
+                        
+                        // Células para cada dia da semana
+                        for (let day = 0; day < 7; day++) {
+                            const cell = document.createElement('td');
+                            cell.className = 'time-slot';
+                            cell.dataset.day = day;
+                            cell.dataset.time = timeString;
+                            
+                            // Destacar horário atual
+                            if (isCurrentTime(day, timeString)) {
+                                cell.classList.add('current-time');
+                            }
+                            
+                            row.appendChild(cell);
+                        }
+                        
+                        tbody.appendChild(row);
+                        
+                        // Parar após as 20h
+                        if (hour === 20 && minute === 30) break;
+                    }
+                }
+                
+                table.appendChild(tbody);
+            }
+            
+            // Função para renderizar a vista diária
+            function renderDayView(table) {
+                // Cabeçalho da tabela
+                const thead = document.createElement('thead');
+                const headerRow = document.createElement('tr');
+                
+                const th = document.createElement('th');
+                const daysOfWeek = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+                const dayIndex = currentDate.getDay();
+                const dateString = formatDate(currentDate);
+                th.innerHTML = `<div>${daysOfWeek[dayIndex]}</div><div style="font-size:0.9rem;font-weight:normal">${dateString}</div>`;
+                headerRow.appendChild(th);
+                
+                thead.appendChild(headerRow);
+                table.appendChild(thead);
+                
+                // Corpo da tabela com horários
+                const tbody = document.createElement('tbody');
+                
+                // Gerar horários das 7h às 20h em intervalos de 30 minutos
+                for (let hour = 7; hour <= 20; hour++) {
+                    for (let minute = 0; minute < 60; minute += 30) {
+                        const row = document.createElement('tr');
+                        
+                        // Coluna de horário
+                        const timeCell = document.createElement('td');
+                        timeCell.className = 'time-label';
+                        const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+                        timeCell.innerHTML = `<span>${timeString}</span>`;
+                        row.appendChild(timeCell);
+                        
+                        // Célula para o dia
+                        const cell = document.createElement('td');
+                        cell.className = 'time-slot';
+                        cell.dataset.day = dayIndex;
+                        cell.dataset.time = timeString;
+                        
+                        // Destacar horário atual
+                        if (isCurrentTime(dayIndex, timeString)) {
+                            cell.classList.add('current-time');
+                        }
+                        
+                        row.appendChild(cell);
+                        tbody.appendChild(row);
+                        
+                        // Parar após as 20h
+                        if (hour === 20 && minute === 30) break;
+                    }
+                }
+                
+                table.appendChild(tbody);
+            }
+            
+            // Função para renderizar eventos no calendário
+            function renderEvents() {
+                events.forEach(event => {
+                    const timeSlot = document.querySelector(`[data-day="${event.day}"][data-time="${event.time}"]`);
+                    if (timeSlot) {
+                        const eventElement = document.createElement('div');
+                        eventElement.className = `event ${event.type}`;
+                        eventElement.textContent = event.title;
+                        eventElement.dataset.duration = event.duration;
+                        
+                        // Calcular quantas linhas o evento ocupa (cada linha = 30 minutos)
+                        const rowspan = Math.ceil(event.duration / 30);
+                        eventElement.style.height = `calc(${rowspan * 40}px - 4px)`;
+                        
+                        timeSlot.appendChild(eventElement);
+                        
+                        // Adicionar ouvinte para editar evento
+                        eventElement.addEventListener('click', function(e) {
+                            e.stopPropagation();
+                            editEvent(event);
+                        });
+                    }
+                });
+            }
+            
+            // Função para adicionar ouvintes de clique aos slots de tempo
+            function addTimeSlotListeners() {
+                const timeSlots = document.querySelectorAll('.time-slot');
+                timeSlots.forEach(slot => {
+                    slot.addEventListener('click', function() {
+                        const day = this.dataset.day;
+                        const time = this.dataset.time;
+                        addEvent(day, time);
+                    });
+                });
+            }
+            
+            // Função para adicionar um novo evento
+            function addEvent(day, time) {
+                const title = prompt('Digite o título do compromisso:');
+                if (!title) return;
+                
+                const duration = prompt('Duração em minutos (30, 60, 90, etc.):', '60');
+                if (!duration) return;
+                
+                const type = prompt('Tipo (meeting, work, personal ou deixe em branco para padrão):', 'work');
+                
+                const newEvent = {
+                    day: parseInt(day),
+                    time: time,
+                    duration: parseInt(duration),
+                    title: title,
+                    type: type || 'work'
+                };
+                
+                events.push(newEvent);
+                renderCalendar();
+            }
+            
+            // Função para editar um evento existente
+            function editEvent(event) {
+                const action = prompt('Digite "editar" para modificar ou "excluir" para remover o compromisso:');
+                
+                if (action && action.toLowerCase() === 'excluir') {
+                    events = events.filter(e => 
+                        !(e.day === event.day && e.time === event.time && e.title === event.title)
+                    );
+                    renderCalendar();
+                    return;
+                }
+                
+                if (action && action.toLowerCase() === 'editar') {
+                    const newTitle = prompt('Novo título:', event.title);
+                    if (!newTitle) return;
+                    
+                    const newDuration = prompt('Nova duração em minutos:', event.duration);
+                    if (!newDuration) return;
+                    
+                    const newType = prompt('Novo tipo (meeting, work, personal):', event.type);
+                    
+                    // Remover evento antigo
+                    events = events.filter(e => 
+                        !(e.day === event.day && e.time === event.time && e.title === event.title)
+                    );
+                    
+                    // Adicionar evento atualizado
+                    events.push({
+                        day: event.day,
+                        time: event.time,
+                        duration: parseInt(newDuration),
+                        title: newTitle,
+                        type: newType || event.type
+                    });
+                    
+                    renderCalendar();
+                }
+            }
+            
+            // Função para mudar de semana
+            function previousWeek() {
+                currentDate.setDate(currentDate.getDate() - 7);
+                updateWeekDisplay();
+                renderCalendar();
+            }
+            
+            function nextWeek() {
+                currentDate.setDate(currentDate.getDate() + 7);
+                updateWeekDisplay();
+                renderCalendar();
+            }
+            
+            // Função para mudar a vista
+            function switchView(view) {
+                currentView = view;
+                
+                // Atualizar botões ativos
+                document.getElementById('view-week').classList.toggle('active', view === 'week');
+                document.getElementById('view-day').classList.toggle('active', view === 'day');
+                
+                renderCalendar();
+            }
+            
+            // Função para imprimir o calendário
+            function printCalendar() {
+                window.print();
+            }
+            
+            // Função para atualizar o display da semana atual
+            function updateWeekDisplay() {
+                const weekDates = getWeekDates(currentDate);
+                const startDate = weekDates[0];
+                const endDate = weekDates[6];
+                
+                const weekDisplay = document.getElementById('current-week');
+                weekDisplay.textContent = `Semana de ${formatDate(startDate)} a ${formatDate(endDate)}`;
+            }
+            
+            // Função auxiliar para obter as datas da semana atual
+            function getWeekDates(date) {
+                const result = [];
+                const day = date.getDay();
+                const diff = date.getDate() - day;
+                
+                for (let i = 0; i < 7; i++) {
+                    const newDate = new Date(date);
+                    newDate.setDate(diff + i);
+                    result.push(newDate);
+                }
+                
+                return result;
+            }
+            
+            // Função auxiliar para formatar data
+            function formatDate(date) {
+                const day = date.getDate().toString().padStart(2, '0');
+                const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                const year = date.getFullYear();
+                return `${day}/${month}/${year}`;
+            }
+            
+            // Função para verificar se é o horário atual
+            function isCurrentTime(day, timeString) {
+                const now = new Date();
+                const today = now.getDay();
+                const currentHour = now.getHours();
+                const currentMinute = now.getMinutes();
+                
+                // Converter timeString para hora e minuto
+                const [hour, minute] = timeString.split(':').map(Number);
+                
+                // Verificar se é hoje e se o horário atual está dentro deste intervalo de 30 minutos
+                return day === today && 
+                       currentHour === hour && 
+                       currentMinute >= minute && 
+                       currentMinute < minute + 30;
+            }
+        });
+    </script>
+</body>
+</html>
